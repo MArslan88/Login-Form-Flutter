@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:login_form_flutter/models/all_categories_model.dart';
+import 'package:login_form_flutter/models/all_products_model.dart';
 import 'package:login_form_flutter/models/login_response.dart';
 
 void main() {
@@ -32,6 +33,7 @@ class Login extends StatefulWidget {
 class _LoginState extends State<Login> {
   UserData? userData;
   List<AllCategoriesData>? categories;
+  List<AllProductsData>? products;
 
   //for loading animation
   bool isLoading = false;
@@ -58,13 +60,14 @@ class _LoginState extends State<Login> {
                   ElevatedButton(onPressed: login, child: Text("Login"))
                 ],
                 if (userData != null) Text(userData?.accessToken ?? ""),
-                if (categories != null)
+                if (products != null)
                   Expanded(
                       child: ListView.builder(
-                    itemCount: categories!.length,
+                    itemCount: products!.length,
                     itemBuilder: (_, index) => ListTile(
-                      title: Text(categories![index].title ?? ""),
-                      leading: Image.network(categories![index].icon ?? ""),
+                      title: Text(products![index].title ?? ""),
+                      leading: Image.network(products![index].image ?? ""),
+                      subtitle: Text("Price: ${products![index].price}"),
                     ),
                   ))
               ],
@@ -85,7 +88,7 @@ class _LoginState extends State<Login> {
       setState(() {
         userData = responseJSON.data;
       });
-      await getAllCategories(); // Categories method call
+      await getAllProducts(); // Categories method call
       // here await will stop this 'try' until categories not get
     } catch (e) {
       setState(() {
@@ -109,6 +112,29 @@ class _LoginState extends State<Login> {
           AllCategoriesResponse.fromJson(jsonDecode(response.body));
       setState(() {
         categories = responseJSON.data;
+      });
+    } catch (e) {
+      setState(() {
+        error = e.toString();
+      });
+    }
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  Future<void> getAllProducts() async {
+    var url = Uri.parse('http://ishaqhassan.com:2000/product');
+    setState(() {
+      isLoading = true;
+    });
+    try {
+      var response = await http.get(url,
+          headers: {"Authorization": "Bearer ${userData?.accessToken}"});
+      var responseJSON =
+          AllProductsResponse.fromJson(jsonDecode(response.body));
+      setState(() {
+        products = responseJSON.data;
       });
     } catch (e) {
       setState(() {
